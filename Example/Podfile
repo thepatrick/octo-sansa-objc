@@ -1,0 +1,13 @@
+source 'https://github.com/CocoaPods/Specs.git'
+use_frameworks!
+
+target 'octo-sansa_Example', :exclusive => true do
+  pod "octo-sansa", :path => "../"
+end
+
+target 'octo-sansa_Tests', :exclusive => true do
+  pod "octo-sansa", :path => "../"
+
+  pod 'Specta'
+  pod 'Expecta'
+end
