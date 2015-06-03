@@ -1,0 +1,6 @@
+framework module Pods_octo_sansa_Example {
+  umbrella header "Pods-octo-sansa_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}
