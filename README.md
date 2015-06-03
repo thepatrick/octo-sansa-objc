@@ -1,6 +1,6 @@
-# octo-sansa
+# octo-sansa-objc
 
-[![CI Status](http://img.shields.io/travis/Patrick Quinn-Graham/octo-sansa.svg?style=flat)](https://travis-ci.org/Patrick Quinn-Graham/octo-sansa)
+[![CI Status](http://img.shields.io/travis/thepatrick/octo-sansa-objc.svg?style=flat)](https://travis-ci.org/Patrick Quinn-Graham/octo-sansa-objc)
 [![Version](https://img.shields.io/cocoapods/v/octo-sansa.svg?style=flat)](http://cocoapods.org/pods/octo-sansa)
 [![License](https://img.shields.io/cocoapods/l/octo-sansa.svg?style=flat)](http://cocoapods.org/pods/octo-sansa)
 [![Platform](https://img.shields.io/cocoapods/p/octo-sansa.svg?style=flat)](http://cocoapods.org/pods/octo-sansa)
@@ -26,4 +26,4 @@ Patrick Quinn-Graham, make-contact@pftqg.com
 
 ## License
 
-octo-sansa is available under the MIT license. See the LICENSE file for more info.
+octo-sansa-objc is available under the MIT license. See the LICENSE file for more info.
