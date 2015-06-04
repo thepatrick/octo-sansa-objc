@@ -28,6 +28,6 @@ Pod::Spec.new do |s|
     # 'octo-sansa' => ['Pod/Assets/*.png']
   }
 
-  s.public_header_files = 'Pod/Classes/**/*.h'
+  s.public_header_files = 'Pod/Classes/OctoSansa.h'
   # s.frameworks = 'UIKit', 'MapKit'
 end

@@ -40,7 +40,7 @@
 - (IBAction)testEcho:(id)sender {
     NSLog(@"test echo!");
     if (self.octo.connectionStatus == OctoSansaConnectionConnected) {
-        [self.octo ask:@"client ask" body:@{ @"hello": @"world" } completionHandler:^(NSError *err, NSDictionary *body) {
+        [self.octo ask:@"client ask" body:@{ @"hello": @"world" } completionHandler:^(NSError *err, id body) {
             if (err) {
                 NSLog(@"Error! %@", err);
             } else {

@@ -14,14 +14,18 @@ typedef enum : NSUInteger {
     OctoSansaConnectionDisconnected,
 } OctoSansaConnection;
 
+@class OctoSansa;
 
-typedef void (^OctoSansaCompletionHandler)(NSError*, NSDictionary*);
+typedef void (^OctoSansaCompletionHandler)(NSError*, id);
 
 @protocol OctoSansaDelegate <NSObject>
 
-- (void)tell:(NSString*)event body:(NSDictionary*)body;
+- (void)tell:(NSString*)event body:(id)body;
+- (void)ask:(NSString*)event body:(id)body completionHandler:(OctoSansaCompletionHandler)callback;
 
-- (void)ask:(NSString*)event body:(NSDictionary*)body completionHandler:(OctoSansaCompletionHandler)callback;
+@optional
+- (void)octoSansa:(OctoSansa*)octoSansa connectionStatusChanged:(OctoSansaConnection)oldStatus;
+- (void)octoSansa:(OctoSansa *)octoSansa didError:(NSError*)error;
 
 @end
 
@@ -31,8 +35,12 @@ typedef void (^OctoSansaCompletionHandler)(NSError*, NSDictionary*);
 @property OctoSansaConnection connectionStatus;
 @property (assign) id <OctoSansaDelegate> delegate;
 
+- (instancetype)initWithDelegate:(id <OctoSansaDelegate>)delegate NS_DESIGNATED_INITIALIZER;
+
 - (void)connect:(NSURL*)connectTo;
-- (void)tell:(NSString*)event body:(NSDictionary*)body;
-- (void)ask:(NSString*)event body:(NSDictionary*)body completionHandler:(OctoSansaCompletionHandler)completionHandler;
+- (void)disconnect;
+
+- (void)tell:(NSString*)event body:(id)body;
+- (void)ask:(NSString*)event body:(id)body completionHandler:(OctoSansaCompletionHandler)completionHandler;
 
 @end

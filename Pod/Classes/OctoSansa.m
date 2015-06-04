@@ -6,79 +6,19 @@
 //  Copyright (c) 2015 Patrick Quinn-Graham. All rights reserved.
 //
 
-// @TODO: Delegate methods for when connectionStatus changes
-// @TODO: Disconnect
-// @TODO: Map errors into error object
-// @TODO: Technically body can be anything JSON serializable, we should allow that & the method signature for OctoSansaCompletionHandler should reflect it
-
 #import "OctoSansa.h"
-
-@interface OctoSansaInputHelper : NSObject
-
-@property (nonatomic) NSInputStream *inputStream;
-@property (nonatomic) NSMutableData *buffer;
-
-@end
-
-@implementation OctoSansaInputHelper
-
-- (instancetype)init
-{
-    if ((self = [super init])) {
-        self.buffer = [NSMutableData data];
-    }
-    return self;
-}
-
--(NSData*)readBytes:(NSUInteger)readBytes error:(NSError**)error
-{
-    if (!self.inputStream.hasBytesAvailable) {
-        NSLog(@"No bytes available :(");
-        return nil;
-    }
-    
-    NSUInteger neededBytes = readBytes - self.buffer.length;
-    
-    NSLog(@"Asked for %lu, we have %lu, which means we need %lu", (unsigned long)readBytes, (unsigned long)self.buffer.length, (unsigned long)neededBytes);
-    
-    uint8_t buf[neededBytes];
-    
-    NSInteger read = [self.inputStream read:buf maxLength:neededBytes];
-    
-    NSLog(@"This leaves us with %ld", (long)read);
-    
-    if (read < 0) { // Something else happened :(
-        *error = [self.inputStream streamError];
-        return nil;
-    }
-    
-    if (read == 0) { // Reached end of stream
-        return nil;
-    }
-    
-    [self.buffer appendBytes:buf length:read];
-    
-    if (self.buffer.length == readBytes) {
-        // give them the buffer
-        NSData *theBuffer = self.buffer;
-        self.buffer = [NSMutableData data];
-        return theBuffer;
-    } else {
-        // not enough data yet
-        return nil;
-    }
-}
-@end
+#import "OctoSansaInputStreamHelper.h"
 
 @interface OctoSansa()
 {
     unsigned int outputByteIndex;
+    OctoSansaConnection _connectionStatus;
 }
 
 @property (nonatomic) NSURL *connectTo;
 @property (nonatomic) NSInputStream *inputStream;
 @property (nonatomic) NSOutputStream *outputStream;
-@property (nonatomic) OctoSansaInputHelper *inputHelper;
+@property (nonatomic) OctoSansaInputStreamHelper *inputHelper;
 
 @property (nonatomic) unsigned int nextPayloadLength;
 
@@ -91,17 +31,32 @@
 
 @implementation OctoSansa
 
-- (instancetype)init
+- (instancetype)initWithDelegate:(id <OctoSansaDelegate>)delegate
 {
     if ((self = [super init])) {
+        _connectionStatus = OctoSansaConnectionDisconnected;
         self.outstandingCallbacks = [NSMutableDictionary dictionary];
-        self.connectionStatus = OctoSansaConnectionDisconnected;
+        self.delegate = delegate;
     }
     return self;
 }
 
-- (void)connect:(NSURL*)connectTo
-{
+- (OctoSansaConnection)connectionStatus {
+    return _connectionStatus;
+}
+
+- (void)setConnectionStatus:(OctoSansaConnection)connectionStatus {
+    OctoSansaConnection oldStatus = _connectionStatus;
+    _connectionStatus = connectionStatus;
+    
+    if ([self.delegate respondsToSelector:@selector(octoSansa:connectionStatusChanged:)]) {
+        [self.delegate octoSansa:self connectionStatusChanged:oldStatus];
+    }
+}
+
+#pragma mark - Connections
+
+- (void)connect:(NSURL*)connectTo {
     if (self.connectionStatus != OctoSansaConnectionDisconnected) {
         return; // Do nothing :)
     }
@@ -116,13 +71,33 @@
     [self.outputStream setDelegate:self];
     [self.inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     [self.outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [self.inputStream setProperty:NSStreamNetworkServiceTypeVoIP forKey:NSStreamNetworkServiceType];
-    [self.outputStream setProperty:NSStreamNetworkServiceTypeVoIP forKey:NSStreamNetworkServiceType];
     [self.inputStream open];
     [self.outputStream open];
     
-    self.inputHelper = [[OctoSansaInputHelper alloc] init];
-    self.inputHelper.inputStream = self.inputStream;
+    self.inputHelper = [OctoSansaInputStreamHelper helperForStream:self.inputStream];
+}
+
+- (void)disconnect {
+    if (self.connectionStatus == OctoSansaConnectionDisconnected) {
+        return; // Do nothing :)
+    }
+    
+    if (self.inputStream) {
+        [self.inputStream close];
+        [self.inputStream removeFromRunLoop:[NSRunLoop currentRunLoop]
+                                    forMode:NSDefaultRunLoopMode];
+        self.inputStream = nil;
+    }
+    
+    if(self.outputStream) {
+        [self.outputStream close];
+        [self.outputStream removeFromRunLoop:[NSRunLoop currentRunLoop]
+                                     forMode:NSDefaultRunLoopMode];
+        self.outputStream = nil;
+    }
+    
+    self.connectionStatus = OctoSansaConnectionDisconnected;
+    
 }
 
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
@@ -141,8 +116,7 @@
 
 #pragma mark - Input stream
 
-- (void)inputStreamEvent:(NSStreamEvent)eventCode
-{
+- (void)inputStreamEvent:(NSStreamEvent)eventCode {
     switch(eventCode) {
         case NSStreamEventHasBytesAvailable:
         {
@@ -182,25 +156,14 @@
         case NSStreamEventEndEncountered:
         {
             NSLog(@"bye bye input stream");
-            [self.inputStream close];
-            [self.inputStream removeFromRunLoop:[NSRunLoop currentRunLoop]
-                                        forMode:NSDefaultRunLoopMode];
-            self.inputStream = nil; // stream is ivar, so reinit it
-            if(self.outputStream) {
-                [self.outputStream close];
-                [self.outputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-                self.outputStream = nil;
-            }
-            
-            self.connectionStatus = OctoSansaConnectionDisconnected;
+            [self disconnect];
             
             break;
         }
     }
 }
 
-- (BOOL)readFromInputStream
-{
+- (BOOL)readFromInputStream {
     NSError *err = nil;
     
     NSLog(@"self.nextPayloadedLength = %u", self.nextPayloadLength);
@@ -241,8 +204,7 @@
     }
 }
 
-- (void)receivedMessageFromServer:(id)message
-{
+- (void)receivedMessageFromServer:(id)message {
     NSLog(@"Incoming singal server message: %@", message);
     
     NSString *kind = [(NSString*)message[@"kind"] lowercaseString];
@@ -256,6 +218,12 @@
     } else if ([kind isEqualToString:@"reply"]) {
         OctoSansaCompletionHandler handler = self.outstandingCallbacks[message[@"id"]];
         if (handler) {
+            NSError *messageErr = nil;
+            NSString *potentialError = message[@"err"];
+            if (potentialError) {
+                NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: potentialError };
+                messageErr = [NSError errorWithDomain:@"OctoSansa" code:1 userInfo:userInfo];
+            }
             handler(message[@"err"], message[@"body"]);
             [self.outstandingCallbacks removeObjectForKey:message[@"id"]];
         }
@@ -264,8 +232,7 @@
 
 #pragma mark - Output stream
 
-- (void)outputStreamEvent:(NSStreamEvent)eventCode
-{
+- (void)outputStreamEvent:(NSStreamEvent)eventCode {
     switch(eventCode) {
             
         case NSStreamEventHasSpaceAvailable:
@@ -295,21 +262,14 @@
         case NSStreamEventErrorOccurred:
         {
             NSLog(@"input stream has error");
+            
             // flow through to End behaviour
         }
             
         case NSStreamEventEndEncountered:
         {
             NSLog(@"bye bye input stream");
-            [self.inputStream close];
-            [self.inputStream removeFromRunLoop:[NSRunLoop currentRunLoop]
-                                        forMode:NSDefaultRunLoopMode];
-            self.inputStream = nil; // stream is ivar, so reinit it
-            if(self.outputStream) {
-                [self.outputStream close];
-                [self.outputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-                self.outputStream = nil;
-            }
+            [self disconnect];
             break;
         }
     }
@@ -379,7 +339,7 @@
     }
 }
 
-- (void)respondToMessage:(NSDictionary*)message withBody:(NSDictionary*)body orError:(NSError*)err
+- (void)respondToMessage:(NSDictionary*)message withBody:(id)body orError:(NSError*)err
 {
     NSMutableDictionary *buildUp = [NSMutableDictionary dictionary];
     
@@ -414,7 +374,7 @@
     [self sendMessage:buildUp];
 }
 
-- (void)ask:(NSString *)event body:(NSDictionary *)body completionHandler:(OctoSansaCompletionHandler)completionHandler
+- (void)ask:(NSString *)event body:(id)body completionHandler:(OctoSansaCompletionHandler)completionHandler
 {
     NSString *askId = [self createNewUUID];
     
