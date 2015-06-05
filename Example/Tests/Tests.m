@@ -55,10 +55,13 @@ describe(@"OctoSansa", ^{
         OCMStub([inputStreamMock streamStatus]).andReturn(NSStreamStatusOpen);
         [octo stream:inputStreamMock handleEvent:NSStreamEventOpenCompleted];
         
+        OCMVerify([inputStreamMock streamStatus]);
+        OCMVerify([outputStreamMock streamStatus]);
+        expect(octo.connectionStatus).to.equal(OctoSansaConnectionConnecting);
+        
         OCMStub([outputStreamMock streamStatus]).andReturn(NSStreamStatusOpen);
         [octo stream:outputStreamMock handleEvent:NSStreamEventOpenCompleted];
         
-        expect(octo.connectionStatus).notTo.equal(OctoSansaConnectionConnecting);
         expect(octo.connectionStatus).to.equal(OctoSansaConnectionConnected);
     });
     
