@@ -6,3 +6,6 @@
   @import Expecta;
 
 #endif
+
+
+#import <OCMock/OCMock.h>

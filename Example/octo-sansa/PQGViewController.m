@@ -52,6 +52,31 @@
     }
 }
 
+#pragma mark - OctoSansaDelegate methods
+
+-(void)octoSansa:(OctoSansa *)octoSansa connectionStatusChanged:(OctoSansaConnection)oldStatus {
+    switch (octoSansa.connectionStatus) {
+        case OctoSansaConnectionConnected:
+            NSLog(@"Connected!");
+            break;
+            
+        case OctoSansaConnectionConnecting:
+            NSLog(@"Connecting!");
+            break;
+            
+        case OctoSansaConnectionDisconnected:
+            NSLog(@"Disconnected");
+            break;
+            
+        default:
+            NSLog(@"?!");
+    }
+}
+
+-(void)octoSansa:(OctoSansa *)octoSansa didError:(NSError *)error {
+    NSLog(@"octoSansa did error: %@", error.localizedDescription);
+}
+
 - (void)tell:(NSString *)event body:(NSDictionary *)body {
     NSLog(@"told %@ %@", event, body);
 }

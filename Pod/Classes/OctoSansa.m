@@ -62,11 +62,13 @@
     }
     
     self.connectionStatus = OctoSansaConnectionConnecting;
-    CFReadStreamRef readStream;
-    CFWriteStreamRef writeStream;
-    CFStreamCreatePairWithSocketToHost(NULL, (__bridge CFStringRef)connectTo.host, connectTo.port.unsignedIntValue, &readStream, &writeStream);
-    self.inputStream = (__bridge_transfer NSInputStream *)readStream;
-    self.outputStream = (__bridge_transfer NSOutputStream *)writeStream;
+    
+    OctoSansaSocketPair *pair = [OctoSansaSocketPair forHost:connectTo.host
+                                                      onPort:connectTo.port.unsignedIntValue];
+
+    self.inputStream = pair.inputStream;
+    self.outputStream = pair.outputStream;
+
     [self.inputStream setDelegate:self];
     [self.outputStream setDelegate:self];
     [self.inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];

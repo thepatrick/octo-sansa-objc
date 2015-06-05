@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "OctoSansaSocketPair.h"
 
 typedef enum : NSUInteger {
     OctoSansaConnectionConnecting,
@@ -30,7 +31,6 @@ typedef void (^OctoSansaCompletionHandler)(NSError*, id);
 @end
 
 @interface OctoSansa : NSObject<NSStreamDelegate>
-
 
 @property OctoSansaConnection connectionStatus;
 @property (assign) id <OctoSansaDelegate> delegate;

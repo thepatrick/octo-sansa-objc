@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "48CCA23999CC7A1D9938BA4D"
+               BlueprintIdentifier = "0596484E7CA0455C004D5123"
                BuildableName = "octo_sansa.framework"
                BlueprintName = "Pods-octo-sansa_Tests-octo-sansa"
                ReferencedContainer = "container:Pods.xcodeproj">
