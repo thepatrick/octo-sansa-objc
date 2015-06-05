@@ -1,10 +1,12 @@
 PODS:
   - Expecta (1.0.0)
+  - OCMock (3.1.2)
   - octo-sansa (0.1.0)
   - Specta (1.0.1)
 
 DEPENDENCIES:
   - Expecta
+  - OCMock
   - octo-sansa (from `../`)
   - Specta
 
@@ -14,7 +16,8 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Expecta: 32604574add2c46a36f8d2f716b6c5736eb75024
-  octo-sansa: c6cd37f3727a09c95ac4b6bd4f0317e1051064a5
+  OCMock: a10ea9f0a6e921651f96f78b6faee95ebc813b92
+  octo-sansa: 1f0248e9353a61b454869a95c665ba52d87db33e
   Specta: 097be314a75de103703a3bf9a529dc1a398509d7
 
-COCOAPODS: 0.37.1
+COCOAPODS: 0.37.2
